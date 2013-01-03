@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cfo.student.bean.StudentEntity">
+	<resultMap type="StudentEntity" id="studentResultMap">
+		<id property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="sex" column="sex"/>
+		<result property="birthday" column="birthday"/>
+	</resultMap>
+	
+	<sql id="table_columns">
+		id,
+		name,
+		sex,
+		birthday
+    </sql>
+	<sql id="entity_properties">
+		#{id},
+		#{name},
+		#{sex},
+		#{birthday}
+	</sql>
+	
+	<!-- 适用于主键自增类型 -->
+	<insert id="save" parameterType="StudentEntity" useGeneratedKeys="true" keyProperty="id">
+		insert into student( <include refid="table_columns" /> ) 
+		values ( <include refid="entity_properties" /> )
+	</insert>
+	
+	<delete id="deleteByIds">
+		delete from student
+		where id in
+		<foreach item="item" collection="array" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+	
+	<update id="update" parameterType="StudentEntity">
+		update student 
+		<trim prefix="set" suffixOverrides=",">
+			<if test="name != null and name != ''">name = #{name},</if>
+			<if test="sex != null and sex != ''">sex = #{sex},</if>
+			<if test="birthday != null">birthday = #{birthday},</if>
+		</trim>
+		<where>id = #{id}</where>
+	</update>
+	
+	<select id="findById" resultMap="studentResultMap" parameterType="String" >
+		select <include refid="table_columns" />
+		from student
+		where id = #{id}
+	</select>
+	
+	<select id="queryAll" resultMap="studentResultMap">
+		select <include refid="table_columns" /> 
+		from student
+	</select>
+	
+	<!-- 使用like用法：columnName like concat('%',#columnName#,'%') -->
+	<sql id="page_where">
+		<trim prefix="where" prefixOverrides="and | or ">
+			<if test="name != null and name != ''">and name like concat('%',#{name},'%')</if>
+			<if test="sex != null and sex != ''">and sex = #{sex}</if>
+			<if test="birthday != null">and birthday = #{birthday}</if>
+		</trim>
+	</sql>
+	
+	<select id="page" resultMap="studentResultMap" parameterType="StudentEntitySearch">
+		select <include refid="table_columns" />
+		from student
+		<include refid="page_where" />
+		limit #{firstIndex},#{pageSize}
+	</select>
+	
+	<select id="pageCount" resultType="int" parameterType="StudentEntitySearch">
+		select count(id) from student
+		<include refid="page_where" />
+	</select>
+	
+	<!-- 其他自定义SQL -->
+	
+</mapper>
